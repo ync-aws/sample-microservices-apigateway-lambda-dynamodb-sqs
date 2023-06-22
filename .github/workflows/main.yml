@@ -45,7 +45,7 @@ jobs:
           pip install terraform-local
           docker pull localstack/localstack-pro:latest
           # Start LocalStack in the background
-          EXTRA_CORS_ALLOWED_ORIGINS=* localstack start -d
+          EXTRA_CORS_ALLOWED_ORIGINS=* DEBUG=1 localstack start -d
           # Wait 30 seconds for the LocalStack container to become ready before timing out
           echo "Waiting for LocalStack startup..."
           localstack wait -t 15
@@ -78,7 +78,7 @@ jobs:
           yarn test
           endpoint_url=$(cat cdk_outputs.json | jq -r .FriendMicroservicesStack[])
           result_player_1=$(curl -X GET "$endpoint_url"friends/player1)
-          echo $result_player_1
+          echo $endpoint_url -> $result_player_1
           result_player_1=$(curl -X GET "$endpoint_url"friends/player1 | jq .[0].friend_id)
           result_player_2=$(curl -X GET "$endpoint_url"friends/player2 | jq .[0].friend_id)
           if [[ "$result_player_1" != "friend2" ]] || [[ "$result_player_2" != "friend1" ]]; then
@@ -100,14 +100,14 @@ jobs:
       #   env:
       #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
-      # - name: Generate a Diagnostic Report
-      #   if: failure()
-      #   run: |
-      #     curl -s localhost:4566/_localstack/diagnose | gzip -cf > diagnose.json.gz
+      - name: Generate a Diagnostic Report
+        if: failure()
+        run: |
+          curl -s localhost:4566/_localstack/diagnose | gzip -cf > diagnose.json.gz
 
-      # - name: Upload the Diagnostic Report
-      #   if: failure()
-      #   uses: actions/upload-artifact@v3
-      #   with:
-      #     name: diagnose.json.gz
-      #     path: ./diagnose.json.gz
+      - name: Upload the Diagnostic Report
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: diagnose.json.gz
+          path: ./diagnose.json.gz

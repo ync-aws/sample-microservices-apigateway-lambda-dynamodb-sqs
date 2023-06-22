@@ -39,7 +39,6 @@ jobs:
       - name: Start LocalStack
         env:
           LOCALSTACK_API_KEY: ${{ secrets.LOCALSTACK_API_KEY }}
-          DNS_ADDRESS: 0
         run: |
           pip install localstack awscli-local[ver1]
           pip install terraform-local
@@ -77,8 +76,6 @@ jobs:
         run: |
           yarn test
           endpoint_url=$(cat cdk_outputs.json | jq -r .FriendMicroservicesStack[])
-          result_player_1=$(curl -X GET "$endpoint_url"friends/player1)
-          echo $endpoint_url - $result_player_1
           result_player_1=$(curl -X GET "$endpoint_url"friends/player1 | jq .[0].friend_id)
           result_player_2=$(curl -X GET "$endpoint_url"friends/player2 | jq .[0].friend_id)
           if [[ "$result_player_1" != "friend2" ]] || [[ "$result_player_2" != "friend1" ]]; then

@@ -76,11 +76,11 @@ jobs:
         run: |
           yarn test
           endpoint_url=$(cat cdk_outputs.json | jq -r .FriendMicroservicesStack[])
-          result_player_1=$(curl -X GET "$endpoint_url"friends/player1 | jq .[0].friend_id)
-          result_player_2=$(curl -X GET "$endpoint_url"friends/player2 | jq .[0].friend_id)
-          if [[ "$result_player_1" != "player2" ]] || [[ "$result_player_2" != "player1" ]]; then
+          result_player_1=$(curl -X GET "$endpoint_url"friends/player1 | jq -r .[0].friend_id)
+          result_player_2=$(curl -X GET "$endpoint_url"friends/player2 | jq -r .[0].friend_id)
+          if [[ $result_player_1 != "player2" ]] || [[ $result_player_2 != "player1" ]]; then
             echo "unexpected response"
-            echo "$result_player_1" "$result_player_2"
+            echo $result_player_1 $result_player_2
             exit 1
           fi
 

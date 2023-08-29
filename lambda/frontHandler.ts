@@ -1,14 +1,14 @@
-import * as AWS from "aws-sdk";
-import Aigle from "aigle";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { Friend, State } from "../models/friend";
-import { keyMap, Keys, tableMap } from "../models/tableDecorator";
+import * as AWS from 'aws-sdk';
+import Aigle from 'aigle';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
+import { Friend, State } from '../models/friend';
+import { keyMap, Keys, tableMap } from '../models/tableDecorator';
 import {
   SQSBatchItemFailure,
   SQSBatchResponse,
   SQSEvent,
   SQSHandler,
-} from "aws-lambda";
+} from 'aws-lambda';
 
 interface InMessage {
   player_id: string;
@@ -17,10 +17,10 @@ interface InMessage {
 }
 
 enum FriendAction {
-  Request = "Request",
-  Accept = "Accept",
-  Reject = "Reject",
-  Unfriend = "Unfriend",
+  Request = 'Request',
+  Accept = 'Accept',
+  Reject = 'Reject',
+  Unfriend = 'Unfriend',
 }
 
 const db = new AWS.DynamoDB.DocumentClient();
@@ -38,7 +38,7 @@ export const handler: SQSHandler = async ({
     try {
       const message: InMessage = JSON.parse(body!);
       await processActions(messageId, message, timeStamp);
-    } catch (e: any) {
+    } catch (e: unknown) {
       batchItemFailures.push({
         itemIdentifier: messageId,
       });
@@ -71,7 +71,7 @@ async function processActions(
       break;
     }
     default:
-      console.log("friend action not supported");
+      console.log('friend action not supported');
       return;
   }
 }
@@ -91,18 +91,20 @@ async function request(
     },
     ConditionExpression: `attribute_not_exists(${friendPk}) AND :player_id <> :friend_id`,
     ExpressionAttributeValues: {
-      ":player_id": player_id,
-      ":friend_id": friend_id,
+      ':player_id': player_id,
+      ':friend_id': friend_id,
     },
   };
   try {
     await db.put(requestParam).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
-      console.log(
-        `could not request, either item already exits or the same player id is used for friend id`
-      );
-      return;
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      if (e.name == 'ConditionalCheckFailedException') {
+        console.log(
+          `could not request, either item already exits or the same player id is used for friend id`
+        );
+        return;
+      }
     }
     throw e;
   }
@@ -115,22 +117,22 @@ async function accept(player_id: string, friend_id: string, timeStamp: number) {
       [friendPk]: player_id,
       [friendSk]: friend_id,
     },
-    UpdateExpression: "SET #state = :friends, #last_updated = :timestamp",
-    ConditionExpression: "#state = :pending",
+    UpdateExpression: 'SET #state = :friends, #last_updated = :timestamp',
+    ConditionExpression: '#state = :pending',
     ExpressionAttributeNames: {
-      "#state": "state",
-      "#last_updated": "last_updated",
+      '#state': 'state',
+      '#last_updated': 'last_updated',
     },
     ExpressionAttributeValues: {
-      ":pending": State.Pending,
-      ":friends": State.Friends,
-      ":timestamp": timeStamp,
+      ':pending': State.Pending,
+      ':friends': State.Friends,
+      ':timestamp': timeStamp,
     },
   };
   try {
     await db.update(acceptParam).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
+  } catch (e: unknown) {
+    if ((e as Error).name == 'ConditionalCheckFailedException') {
       console.log(`could not accept, state is not ${State.Pending}`);
       return;
     }
@@ -145,20 +147,22 @@ async function reject(player_id: string, friend_id: string) {
       [friendPk]: player_id,
       [friendSk]: friend_id,
     },
-    ConditionExpression: "#state = :pending",
+    ConditionExpression: '#state = :pending',
     ExpressionAttributeNames: {
-      "#state": "state",
+      '#state': 'state',
     },
     ExpressionAttributeValues: {
-      ":pending": State.Pending,
+      ':pending': State.Pending,
     },
   };
   try {
     await db.delete(rejectParam).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
-      console.log(`could not reject, state is not ${State.Pending}`);
-      return;
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      if (e.name == 'ConditionalCheckFailedException') {
+        console.log(`could not reject, state is not ${State.Pending}`);
+        return;
+      }
     }
     throw e;
   }
@@ -171,20 +175,22 @@ async function unfriend(player_id: string, friend_id: string) {
       [friendPk]: player_id,
       [friendSk]: friend_id,
     },
-    ConditionExpression: "#state = :friends",
+    ConditionExpression: '#state = :friends',
     ExpressionAttributeNames: {
-      "#state": "state",
+      '#state': 'state',
     },
     ExpressionAttributeValues: {
-      ":friends": State.Friends,
+      ':friends': State.Friends,
     },
   };
   try {
     await db.delete(unfriendParam).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
-      console.log(`could not unfriend, state is not ${State.Friends}`);
-      return;
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      if (e.name == 'ConditionalCheckFailedException') {
+        console.log(`could not unfriend, state is not ${State.Friends}`);
+        return;
+      }
     }
     throw e;
   }

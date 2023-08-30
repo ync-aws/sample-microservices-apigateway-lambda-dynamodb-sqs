@@ -1,14 +1,14 @@
-import * as AWS from "aws-sdk";
-import Aigle from "aigle";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import * as AWS from 'aws-sdk';
+import Aigle from 'aigle';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import {
   DynamoDBBatchItemFailure,
   DynamoDBBatchResponse,
   DynamoDBStreamEvent,
   DynamoDBStreamHandler,
-} from "aws-lambda";
-import { Friend, State } from "../models/friend";
-import { keyMap, Keys, tableMap } from "../models/tableDecorator";
+} from 'aws-lambda';
+import { Friend, State } from '../models/friend';
+import { keyMap, Keys, tableMap } from '../models/tableDecorator';
 
 const db = new AWS.DynamoDB.DocumentClient();
 
@@ -25,11 +25,11 @@ export const handler: DynamoDBStreamHandler = async ({
     const { NewImage, SequenceNumber } = dynamodb!;
     try {
       await accept(
-        NewImage![friendPk]["S"]!,
-        NewImage![friendSk]["S"]!,
+        NewImage![friendPk]['S']!,
+        NewImage![friendSk]['S']!,
         timeStamp
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
       batchItemFailures.push({
         itemIdentifier: SequenceNumber!,
       });
@@ -46,25 +46,27 @@ async function accept(playerId: string, friendId: string, timeStamp: number) {
       [friendPk]: friendId,
       [friendSk]: playerId,
     },
-    ConditionExpression: "#state = :requested",
-    UpdateExpression: "SET #state = :friends, #last_updated = :last_updated",
+    ConditionExpression: '#state = :requested',
+    UpdateExpression: 'SET #state = :friends, #last_updated = :last_updated',
     ExpressionAttributeNames: {
-      "#state": "state",
-      "#last_updated": "last_updated",
+      '#state': 'state',
+      '#last_updated': 'last_updated',
     },
     ExpressionAttributeValues: {
-      ":requested": State.Requested,
-      ":friends": State.Friends,
-      ":last_updated": timeStamp,
+      ':requested': State.Requested,
+      ':friends': State.Friends,
+      ':last_updated': timeStamp,
     },
   };
 
   try {
     await db.update(updateReceiverParams).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
-      console.log(`could not accept, state is not ${State.Requested}`);
-      return;
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      if (e.name == 'ConditionalCheckFailedException') {
+        console.log(`could not accept, state is not ${State.Requested}`);
+        return;
+      }
     }
   }
 }

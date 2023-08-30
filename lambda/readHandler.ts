@@ -1,12 +1,12 @@
-import * as AWS from "aws-sdk";
+import * as AWS from 'aws-sdk';
 import {
   APIGatewayProxyEvent,
   APIGatewayProxyHandler,
   APIGatewayProxyResult,
-} from "aws-lambda";
-import { Friend } from "../models/friend";
-import { keyMap, Keys, tableMap } from "../models/tableDecorator";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+} from 'aws-lambda';
+import { Friend } from '../models/friend';
+import { keyMap, Keys, tableMap } from '../models/tableDecorator';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
 const db = new AWS.DynamoDB.DocumentClient();
 
@@ -19,13 +19,13 @@ export const handler: APIGatewayProxyHandler = async ({
   path,
   pathParameters,
 }: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  if (httpMethod != "GET") {
+  if (httpMethod != 'GET') {
     throw new Error(`friends only accept GET method, you tried: ${httpMethod}`);
   }
 
-  const playerId = pathParameters!["playerId"];
-  if (path.includes("isFriend")) {
-    const friendId = pathParameters!["friendId"];
+  const playerId = pathParameters!['playerId'];
+  if (path.includes('isFriend')) {
+    const friendId = pathParameters!['friendId'];
     const getParam: DocumentClient.GetItemInput = {
       TableName: friendTableName,
       Key: {
@@ -36,18 +36,18 @@ export const handler: APIGatewayProxyHandler = async ({
     const result = await db.get(getParam).promise();
     return {
       statusCode: 200,
-      body: result.Item!["state"],
+      body: result.Item!['state'],
     };
   }
 
   const queryParam: DocumentClient.QueryInput = {
     TableName: friendTableName,
-    KeyConditionExpression: "#player_id = :player_id",
+    KeyConditionExpression: '#player_id = :player_id',
     ExpressionAttributeNames: {
-      "#player_id": friendPk,
+      '#player_id': friendPk,
     },
     ExpressionAttributeValues: {
-      ":player_id": playerId,
+      ':player_id': playerId,
     },
   };
   const result = await db.query(queryParam).promise();

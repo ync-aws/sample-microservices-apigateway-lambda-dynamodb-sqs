@@ -1,14 +1,14 @@
-import * as AWS from "aws-sdk";
-import Aigle from "aigle";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import * as AWS from 'aws-sdk';
+import Aigle from 'aigle';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import {
   DynamoDBBatchItemFailure,
   DynamoDBBatchResponse,
   DynamoDBStreamEvent,
   DynamoDBStreamHandler,
-} from "aws-lambda";
-import { Friend, State } from "../models/friend";
-import { keyMap, Keys, tableMap } from "../models/tableDecorator";
+} from 'aws-lambda';
+import { Friend, State } from '../models/friend';
+import { keyMap, Keys, tableMap } from '../models/tableDecorator';
 
 const db = new AWS.DynamoDB.DocumentClient();
 
@@ -23,8 +23,8 @@ export const handler: DynamoDBStreamHandler = async ({
   await Aigle.forEach(Records, async ({ dynamodb }) => {
     const { OldImage, SequenceNumber } = dynamodb!;
     try {
-      await unfriend(OldImage![friendPk]["S"]!, OldImage![friendSk]["S"]!);
-    } catch (e: any) {
+      await unfriend(OldImage![friendPk]['S']!, OldImage![friendSk]['S']!);
+    } catch (e: unknown) {
       batchItemFailures.push({
         itemIdentifier: SequenceNumber!,
       });
@@ -41,22 +41,24 @@ async function unfriend(playerId: string, friendId: string) {
       [friendPk]: friendId,
       [friendSk]: playerId,
     },
-    ConditionExpression: "#state = :friends",
+    ConditionExpression: '#state = :friends',
     ExpressionAttributeNames: {
-      "#state": "state",
+      '#state': 'state',
     },
     ExpressionAttributeValues: {
-      ":friends": State.Friends,
+      ':friends': State.Friends,
     },
   };
   try {
     await db.delete(rejectParam).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
-      // unfriendState Handler will be called twice for both players,
-      // and for the second player it will be conditional check fail,
-      // since there is no item to delete
-      return;
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      if (e.name == 'ConditionalCheckFailedException') {
+        // unfriendState Handler will be called twice for both players,
+        // and for the second player it will be conditional check fail,
+        // since there is no item to delete
+        return;
+      }
     }
     throw e;
   }

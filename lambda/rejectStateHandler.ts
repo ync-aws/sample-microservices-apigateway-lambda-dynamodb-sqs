@@ -1,14 +1,14 @@
-import * as AWS from "aws-sdk";
-import Aigle from "aigle";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import * as AWS from 'aws-sdk';
+import Aigle from 'aigle';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import {
   DynamoDBBatchItemFailure,
   DynamoDBBatchResponse,
   DynamoDBStreamEvent,
   DynamoDBStreamHandler,
-} from "aws-lambda";
-import { Friend, State } from "../models/friend";
-import { keyMap, Keys, tableMap } from "../models/tableDecorator";
+} from 'aws-lambda';
+import { Friend, State } from '../models/friend';
+import { keyMap, Keys, tableMap } from '../models/tableDecorator';
 
 const db = new AWS.DynamoDB.DocumentClient();
 
@@ -23,8 +23,8 @@ export const handler: DynamoDBStreamHandler = async ({
   await Aigle.forEach(Records, async ({ dynamodb }) => {
     const { OldImage, SequenceNumber } = dynamodb!;
     try {
-      await reject(OldImage![friendPk]["S"]!, OldImage![friendSk]["S"]!);
-    } catch (e: any) {
+      await reject(OldImage![friendPk]['S']!, OldImage![friendSk]['S']!);
+    } catch (e: unknown) {
       batchItemFailures.push({
         itemIdentifier: SequenceNumber!,
       });
@@ -41,20 +41,22 @@ async function reject(playerId: string, friendId: string) {
       [friendPk]: friendId,
       [friendSk]: playerId,
     },
-    ConditionExpression: "#state = :requested",
+    ConditionExpression: '#state = :requested',
     ExpressionAttributeNames: {
-      "#state": "state",
+      '#state': 'state',
     },
     ExpressionAttributeValues: {
-      ":requested": State.Requested,
+      ':requested': State.Requested,
     },
   };
   try {
     await db.delete(rejectParam).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
-      console.log(`could not reject, state is not ${State.Requested}`);
-      return;
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      if (e.name == 'ConditionalCheckFailedException') {
+        console.log(`could not reject, state is not ${State.Requested}`);
+        return;
+      }
     }
     throw e;
   }

@@ -3,30 +3,30 @@ import {
   BillingMode,
   StreamViewType,
   Table,
-} from "aws-cdk-lib/aws-dynamodb";
-import { Construct } from "constructs";
+} from 'aws-cdk-lib/aws-dynamodb';
+import { Construct } from 'constructs';
 import {
   FilterCriteria,
   FilterRule,
   Runtime,
   StartingPosition,
-} from "aws-cdk-lib/aws-lambda";
-import * as cdk from "aws-cdk-lib";
-import { Friend, State } from "../models/friend";
-import { keyMap, Keys, tableMap } from "../models/tableDecorator";
+} from 'aws-cdk-lib/aws-lambda';
+import * as cdk from 'aws-cdk-lib';
+import { Friend, State } from '../models/friend';
+import { keyMap, Keys, tableMap } from '../models/tableDecorator';
 import {
   NodejsFunction,
   NodejsFunctionProps,
-} from "aws-cdk-lib/aws-lambda-nodejs";
-import { Queue } from "aws-cdk-lib/aws-sqs";
-import { RemovalPolicy, Stack, StackProps } from "aws-cdk-lib";
+} from 'aws-cdk-lib/aws-lambda-nodejs';
+import { Queue } from 'aws-cdk-lib/aws-sqs';
+import { RemovalPolicy, Stack, StackProps } from 'aws-cdk-lib';
 import {
   DynamoEventSource,
   SqsDlq,
   SqsEventSource,
   StreamEventSourceProps,
-} from "aws-cdk-lib/aws-lambda-event-sources";
-import { LambdaRestApi } from "aws-cdk-lib/aws-apigateway";
+} from 'aws-cdk-lib/aws-lambda-event-sources';
+import { LambdaRestApi } from 'aws-cdk-lib/aws-apigateway';
 
 const friendTableName = tableMap.get(Friend)!;
 const friendPk = keyMap.get(Friend)!.get(Keys.PK)!;
@@ -37,46 +37,46 @@ export class FriendMicroservicesStack extends Stack {
     super(scope, id, props);
 
     const functionProp: NodejsFunctionProps = {
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_18_X,
       timeout: cdk.Duration.seconds(10000),
       memorySize: 1024,
     };
 
-    const frontHandler = new NodejsFunction(this, "frontHandler", {
-      entry: "lambda/frontHandler.ts",
+    const frontHandler = new NodejsFunction(this, 'frontHandler', {
+      entry: 'lambda/frontHandler.ts',
       ...functionProp,
     });
     const requestStateHandler = new NodejsFunction(
       this,
-      "requestStateHandler",
+      'requestStateHandler',
       {
-        entry: "lambda/requestStateHandler.ts",
+        entry: 'lambda/requestStateHandler.ts',
         ...functionProp,
       }
     );
-    const acceptStateHandler = new NodejsFunction(this, "acceptStateHandler", {
-      entry: "lambda/acceptStateHandler.ts",
+    const acceptStateHandler = new NodejsFunction(this, 'acceptStateHandler', {
+      entry: 'lambda/acceptStateHandler.ts',
       ...functionProp,
     });
-    const rejectStateHandler = new NodejsFunction(this, "rejectStateHandler", {
-      entry: "lambda/rejectStateHandler.ts",
+    const rejectStateHandler = new NodejsFunction(this, 'rejectStateHandler', {
+      entry: 'lambda/rejectStateHandler.ts',
       ...functionProp,
     });
     const unfriendStateHandler = new NodejsFunction(
       this,
-      "unfriendStateHandler",
+      'unfriendStateHandler',
       {
-        entry: "lambda/unfriendStateHandler.ts",
+        entry: 'lambda/unfriendStateHandler.ts',
         ...functionProp,
       }
     );
 
-    const readHandler = new NodejsFunction(this, "readHandler", {
-      entry: "lambda/readHandler.ts",
+    const readHandler = new NodejsFunction(this, 'readHandler', {
+      entry: 'lambda/readHandler.ts',
       ...functionProp,
     });
 
-    const friendTable = new Table(this, "Friend", {
+    const friendTable = new Table(this, 'Friend', {
       tableName: friendTableName,
       partitionKey: {
         name: friendPk,
@@ -102,7 +102,7 @@ export class FriendMicroservicesStack extends Stack {
     friendTable.grantWriteData(unfriendStateHandler);
     friendTable.grantReadData(readHandler);
 
-    const frontQueue = new Queue(this, "frontQueue");
+    const frontQueue = new Queue(this, 'frontQueue');
     frontHandler.addEventSource(
       new SqsEventSource(frontQueue, {
         reportBatchItemFailures: true,
@@ -110,7 +110,7 @@ export class FriendMicroservicesStack extends Stack {
       })
     );
 
-    const stateHandlerDLQ = new SqsDlq(new Queue(this, "stateHandleDLQ"));
+    const stateHandlerDLQ = new SqsDlq(new Queue(this, 'stateHandleDLQ'));
 
     const streamEventSourceProps: StreamEventSourceProps = {
       startingPosition: StartingPosition.LATEST,
@@ -124,7 +124,7 @@ export class FriendMicroservicesStack extends Stack {
       new DynamoEventSource(friendTable, {
         filters: [
           FilterCriteria.filter({
-            eventName: FilterRule.isEqual("INSERT"),
+            eventName: FilterRule.isEqual('INSERT'),
             dynamodb: {
               NewImage: {
                 state: { S: FilterRule.isEqual(State.Requested) },
@@ -140,7 +140,7 @@ export class FriendMicroservicesStack extends Stack {
       new DynamoEventSource(friendTable, {
         filters: [
           FilterCriteria.filter({
-            eventName: FilterRule.isEqual("MODIFY"),
+            eventName: FilterRule.isEqual('MODIFY'),
             dynamodb: {
               NewImage: {
                 state: { S: FilterRule.isEqual(State.Friends) },
@@ -159,7 +159,7 @@ export class FriendMicroservicesStack extends Stack {
       new DynamoEventSource(friendTable, {
         filters: [
           FilterCriteria.filter({
-            eventName: FilterRule.isEqual("REMOVE"),
+            eventName: FilterRule.isEqual('REMOVE'),
             dynamodb: {
               OldImage: {
                 state: { S: FilterRule.isEqual(State.Pending) },
@@ -175,7 +175,7 @@ export class FriendMicroservicesStack extends Stack {
       new DynamoEventSource(friendTable, {
         filters: [
           FilterCriteria.filter({
-            eventName: FilterRule.isEqual("REMOVE"),
+            eventName: FilterRule.isEqual('REMOVE'),
             dynamodb: {
               OldImage: {
                 state: { S: FilterRule.isEqual(State.Friends) },
@@ -187,17 +187,17 @@ export class FriendMicroservicesStack extends Stack {
       })
     );
 
-    const readAPI = new LambdaRestApi(this, "readAPI", {
+    const readAPI = new LambdaRestApi(this, 'readAPI', {
       handler: readHandler,
       proxy: false,
     });
 
-    const friends = readAPI.root.addResource("friends");
-    friends.addResource("{playerId}").addMethod("GET");
+    const friends = readAPI.root.addResource('friends');
+    friends.addResource('{playerId}').addMethod('GET');
     friends
-      .addResource("isFriend")
-      .addResource("{playerId}")
-      .addResource("{friendId}")
-      .addMethod("GET");
+      .addResource('isFriend')
+      .addResource('{playerId}')
+      .addResource('{friendId}')
+      .addMethod('GET');
   }
 }

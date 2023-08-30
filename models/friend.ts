@@ -1,6 +1,6 @@
-import { Table, pk, sk } from "./tableDecorator";
+import { Table, pk, sk } from './tableDecorator';
 
-@Table("Friend")
+@Table('Friend')
 export class Friend {
   @pk
   player_id: string;
@@ -11,7 +11,7 @@ export class Friend {
 }
 
 export enum State {
-  Requested = "Requested",
-  Pending = "Pending",
-  Friends = "Friends",
+  Requested = 'Requested',
+  Pending = 'Pending',
+  Friends = 'Friends',
 }

@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 type Constructor<T = any> = new (...args: any[]) => T;
 type Field = string;
 export enum Keys {
-  PK = "pk",
-  SK = "sk",
+  PK = 'pk',
+  SK = 'sk',
 }
 
 export const tableMap = new Map<Constructor, string>();
@@ -18,9 +19,9 @@ export const pk = addKey(Keys.PK);
 export const sk = addKey(Keys.SK);
 
 export function addKey(key: Keys) {
-  return (Class: any, field: Field) => {
-    const map = keyMap.get(Class.constructor) ?? new Map<Keys, Field>();
+  return (Clazz: any, field: Field) => {
+    const map = keyMap.get(Clazz.constructor) ?? new Map<Keys, Field>();
     map.set(key, field);
-    keyMap.set(Class.constructor, map);
+    keyMap.set(Clazz.constructor, map);
   };
 }

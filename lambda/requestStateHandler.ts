@@ -1,14 +1,14 @@
-import * as AWS from "aws-sdk";
-import Aigle from "aigle";
-import { DocumentClient } from "aws-sdk/clients/dynamodb";
+import * as AWS from 'aws-sdk';
+import Aigle from 'aigle';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import {
   DynamoDBBatchItemFailure,
   DynamoDBBatchResponse,
   DynamoDBStreamEvent,
   DynamoDBStreamHandler,
-} from "aws-lambda";
-import { Friend, State } from "../models/friend";
-import { keyMap, Keys, tableMap } from "../models/tableDecorator";
+} from 'aws-lambda';
+import { Friend, State } from '../models/friend';
+import { keyMap, Keys, tableMap } from '../models/tableDecorator';
 
 const db = new AWS.DynamoDB.DocumentClient();
 
@@ -25,11 +25,11 @@ export const handler: DynamoDBStreamHandler = async ({
     const { NewImage, SequenceNumber } = dynamodb!;
     try {
       await request(
-        NewImage![friendPk]["S"]!,
-        NewImage![friendSk]["S"]!,
+        NewImage![friendPk]['S']!,
+        NewImage![friendSk]['S']!,
         timeStamp
       );
-    } catch (e: any) {
+    } catch (e: unknown) {
       batchItemFailures.push({
         itemIdentifier: SequenceNumber!,
       });
@@ -56,8 +56,8 @@ async function request(
   };
   try {
     await db.put(friendParam).promise();
-  } catch (e: any) {
-    if (e.name == "ConditionalCheckFailedException") {
+  } catch (e: unknown) {
+    if ((e as Error).name == 'ConditionalCheckFailedException') {
       await failedToRequest(requesterId, receiverId, timeStamp);
       return;
     }
@@ -77,16 +77,16 @@ async function failedToRequest(
         [friendPk]: receiverId,
         [friendSk]: requesterId,
       },
-      ConditionExpression: "#state = :requested",
-      UpdateExpression: "SET #state = :friends, #last_updated = :last_updated",
+      ConditionExpression: '#state = :requested',
+      UpdateExpression: 'SET #state = :friends, #last_updated = :last_updated',
       ExpressionAttributeNames: {
-        "#state": "state",
-        "#last_updated": "last_updated",
+        '#state': 'state',
+        '#last_updated': 'last_updated',
       },
       ExpressionAttributeValues: {
-        ":requested": State.Requested,
-        ":friends": State.Friends,
-        ":last_updated": timeStamp,
+        ':requested': State.Requested,
+        ':friends': State.Friends,
+        ':last_updated': timeStamp,
       },
     },
   };
@@ -98,16 +98,16 @@ async function failedToRequest(
         [friendPk]: requesterId,
         [friendSk]: receiverId,
       },
-      ConditionExpression: "#state = :requested",
-      UpdateExpression: "SET #state = :friends, #last_updated = :last_updated",
+      ConditionExpression: '#state = :requested',
+      UpdateExpression: 'SET #state = :friends, #last_updated = :last_updated',
       ExpressionAttributeNames: {
-        "#state": "state",
-        "#last_updated": "last_updated",
+        '#state': 'state',
+        '#last_updated': 'last_updated',
       },
       ExpressionAttributeValues: {
-        ":requested": State.Requested,
-        ":friends": State.Friends,
-        ":last_updated": timeStamp,
+        ':requested': State.Requested,
+        ':friends': State.Friends,
+        ':last_updated': timeStamp,
       },
     },
   };
@@ -118,16 +118,22 @@ async function failedToRequest(
         TransactItems: [updateReceiverParams, updateRequesterParam],
       })
       .promise();
-  } catch (e: any) {
-    if (e.name == "TransactionCanceledException") {
-      if (e.message.includes("TransactionConflict")) {
-        console.log(`transact write failed, transaction has conflicted, retry`);
-        throw e;
+  } catch (e: unknown) {
+    if (e instanceof Error) {
+      if (e.name == 'TransactionCanceledException') {
+        if (e.message.includes('TransactionConflict')) {
+          console.log(
+            `transact write failed, transaction has conflicted, retry`
+          );
+          throw e;
+        }
+        console.log(
+          `transact write failed, either requester or receiver has different state, no dead lock`
+        );
+        return;
       }
-      console.log(
-        `transact write failed, either requester or receiver has different state, no dead lock`
-      );
-      return;
+    } else {
+      console.log(e);
     }
     throw e;
   }

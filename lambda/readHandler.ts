@@ -10,9 +10,9 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 
 const db = new AWS.DynamoDB.DocumentClient();
 
-const friendTableName = tableMap.get(Friend)!;
-const friendPk = keyMap.get(Friend)!.get(Keys.PK)!;
-const friendSk = keyMap.get(Friend)!.get(Keys.SK)!;
+const friendTableName = tableMap.get(Friend) ?? '';
+const friendPk = keyMap.get(Friend)?.get(Keys.PK) ?? '';
+const friendSk = keyMap.get(Friend)?.get(Keys.SK) ?? '';
 
 export const handler: APIGatewayProxyHandler = async ({
   httpMethod,
@@ -23,9 +23,15 @@ export const handler: APIGatewayProxyHandler = async ({
     throw new Error(`friends only accept GET method, you tried: ${httpMethod}`);
   }
 
-  const playerId = pathParameters!['playerId'];
+  if (!pathParameters) {
+    return {
+      statusCode: 500,
+      body: `transact write failed, pathParameters must supply`,
+    };
+  }
+  const playerId = pathParameters['playerId'];
   if (path.includes('isFriend')) {
-    const friendId = pathParameters!['friendId'];
+    const friendId = pathParameters['friendId'];
     const getParam: DocumentClient.GetItemInput = {
       TableName: friendTableName,
       Key: {
@@ -36,7 +42,7 @@ export const handler: APIGatewayProxyHandler = async ({
     const result = await db.get(getParam).promise();
     return {
       statusCode: 200,
-      body: result.Item!['state'],
+      body: result.Item?.['state'],
     };
   }
 
@@ -53,6 +59,6 @@ export const handler: APIGatewayProxyHandler = async ({
   const result = await db.query(queryParam).promise();
   return {
     statusCode: 200,
-    body: JSON.stringify(result.Items!),
+    body: JSON.stringify(result.Items ?? ''),
   };
 };

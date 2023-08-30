@@ -12,21 +12,26 @@ import { keyMap, Keys, tableMap } from '../models/tableDecorator';
 
 const db = new AWS.DynamoDB.DocumentClient();
 
-const friendTableName = tableMap.get(Friend)!;
-const friendPk = keyMap.get(Friend)!.get(Keys.PK)!;
-const friendSk = keyMap.get(Friend)!.get(Keys.SK)!;
+const friendTableName = tableMap.get(Friend) ?? '';
+const friendPk = keyMap.get(Friend)?.get(Keys.PK) ?? '';
+const friendSk = keyMap.get(Friend)?.get(Keys.SK) ?? '';
 
 export const handler: DynamoDBStreamHandler = async ({
   Records,
 }: DynamoDBStreamEvent): Promise<DynamoDBBatchResponse> => {
   const batchItemFailures: DynamoDBBatchItemFailure[] = [];
   await Aigle.forEach(Records, async ({ dynamodb }) => {
-    const { OldImage, SequenceNumber } = dynamodb!;
+    if (!dynamodb) return;
+    const { OldImage, SequenceNumber } = dynamodb;
     try {
-      await unfriend(OldImage![friendPk]['S']!, OldImage![friendSk]['S']!);
+      OldImage &&
+        (await unfriend(
+          OldImage[friendPk]['S'] ?? '',
+          OldImage[friendSk]['S'] ?? ''
+        ));
     } catch (e: unknown) {
       batchItemFailures.push({
-        itemIdentifier: SequenceNumber!,
+        itemIdentifier: SequenceNumber ?? '',
       });
       console.log(e);
     }

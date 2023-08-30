@@ -25,9 +25,9 @@ enum FriendAction {
 
 const db = new AWS.DynamoDB.DocumentClient();
 
-const friendTableName = tableMap.get(Friend)!;
-const friendPk = keyMap.get(Friend)!.get(Keys.PK)!;
-const friendSk = keyMap.get(Friend)!.get(Keys.SK)!;
+const friendTableName = tableMap.get(Friend) ?? '';
+const friendPk = keyMap.get(Friend)?.get(Keys.PK) ?? '';
+const friendSk = keyMap.get(Friend)?.get(Keys.SK) ?? '';
 
 export const handler: SQSHandler = async ({
   Records,
@@ -35,9 +35,10 @@ export const handler: SQSHandler = async ({
   const timeStamp = Date.now();
   const batchItemFailures: SQSBatchItemFailure[] = [];
   await Aigle.forEach(Records, async ({ body, messageId }) => {
+    if (!body) return;
     try {
-      const message: InMessage = JSON.parse(body!);
-      await processActions(messageId, message, timeStamp);
+      const message: InMessage = JSON.parse(body);
+      body && (await processActions(messageId, message, timeStamp));
     } catch (e: unknown) {
       batchItemFailures.push({
         itemIdentifier: messageId,

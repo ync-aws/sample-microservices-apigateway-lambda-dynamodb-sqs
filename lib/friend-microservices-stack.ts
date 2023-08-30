@@ -28,9 +28,9 @@ import {
 } from 'aws-cdk-lib/aws-lambda-event-sources';
 import { LambdaRestApi } from 'aws-cdk-lib/aws-apigateway';
 
-const friendTableName = tableMap.get(Friend)!;
-const friendPk = keyMap.get(Friend)!.get(Keys.PK)!;
-const friendSk = keyMap.get(Friend)!.get(Keys.SK)!;
+const friendTableName = tableMap.get(Friend) ?? '';
+const friendPk = keyMap.get(Friend)?.get(Keys.PK) ?? '';
+const friendSk = keyMap.get(Friend)?.get(Keys.SK) ?? '';
 
 export class FriendMicroservicesStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {

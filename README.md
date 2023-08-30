@@ -70,6 +70,28 @@ To test the microservice, we will send Friend Action Events to the front SQS que
 awslocal sqs list-queues
 ```
 
+> {
+>
+>   "QueueUrls": [
+>
+> ​    "http://localhost:4566/000000000000/FriendMicroservicesStack-frontQueue8BA7833E-f6b69a1a",
+>
+> ​    "http://localhost:4566/000000000000/FriendMicroservicesStack-stateHandleDLQ31013887-3b3c117b"
+>
+>   ]
+>
+> }
+
+  "QueueUrls": [
+
+​    "http://localhost:4566/000000000000/FriendMicroservicesStack-frontQueue8BA7833E-f6b69a1a",
+
+​    "http://localhost:4566/000000000000/FriendMicroservicesStack-stateHandleDLQ31013887-3b3c117b"
+
+  ]
+
+}
+
 Get the URL of the Front Queue and use the following commands to send a friend request event:
 
 ```shell
@@ -114,3 +136,21 @@ The sample application is based on a [public AWS sample app](https://github.com/
 We appreciate your interest in contributing to our project and are always looking for new ways to improve the developer experience. We welcome feedback, bug reports, and even feature ideas from the community.
 Please refer to the [contributing file](CONTRIBUTING.md) for more details on how to get started. 
 
+### api url
+Outputs:
+  FriendMicroservicesStack.readAPIEndpointBC0C78A7 = https://18a9powgle.execute-api.localhost.localstack.cloud:4566/prod/
+Stack ARN:
+  arn:aws:cloudformation:ap-northeast-1:000000000000:stack/FriendMicroservicesStack/944bb366
+
+**dashboard**
+
+https://app.localstack.cloud/dashboard
+
+# Code Spec
+
+### readAPI
+
+GET /friends/{playreId}
+GET /isFriend/{playerId}/{friendId}
+
+-> readHandler

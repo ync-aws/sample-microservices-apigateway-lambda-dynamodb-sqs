@@ -34,7 +34,10 @@ export const handler: SQSHandler = async ({
 }: SQSEvent): Promise<SQSBatchResponse> => {
   const timeStamp = Date.now();
   const batchItemFailures: SQSBatchItemFailure[] = [];
+  console.log({ Records });
   await Aigle.forEach(Records, async ({ body, messageId }) => {
+    console.log({ body });
+    console.log({ messageId });
     if (!body) return;
     try {
       const message: InMessage = JSON.parse(body);
@@ -54,6 +57,9 @@ async function processActions(
   { player_id, friend_id, friend_action }: InMessage,
   timeStamp: number
 ) {
+  console.log({ player_id });
+  console.log({ friend_id });
+  console.log({ friend_action });
   switch (friend_action) {
     case FriendAction.Request: {
       await request(player_id, friend_id, timeStamp);
@@ -82,6 +88,9 @@ async function request(
   friend_id: string,
   timeStamp: number
 ) {
+  console.log({ player_id });
+  console.log({ friend_id });
+  console.log({ timeStamp });
   const requestParam: DocumentClient.PutItemInput = {
     TableName: friendTableName,
     Item: {
@@ -97,8 +106,11 @@ async function request(
     },
   };
   try {
+    console.log('updating...');
     await db.put(requestParam).promise();
+    console.log('updated.');
   } catch (e: unknown) {
+    console.log('e', e);
     if (e instanceof Error) {
       if (e.name == 'ConditionalCheckFailedException') {
         console.log(

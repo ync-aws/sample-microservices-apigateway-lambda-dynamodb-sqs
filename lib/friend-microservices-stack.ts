@@ -33,6 +33,8 @@ const friendPk = keyMap.get(Friend)?.get(Keys.PK) ?? '';
 const friendSk = keyMap.get(Friend)?.get(Keys.SK) ?? '';
 
 export class FriendMicroservicesStack extends Stack {
+  public readonly apiEndpointUrl: cdk.CfnOutput;
+
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, props);
 
@@ -102,6 +104,7 @@ export class FriendMicroservicesStack extends Stack {
     friendTable.grantWriteData(unfriendStateHandler);
     friendTable.grantReadData(readHandler);
 
+    // frontQueue
     const frontQueue = new Queue(this, 'frontQueue');
     frontHandler.addEventSource(
       new SqsEventSource(frontQueue, {
@@ -110,6 +113,8 @@ export class FriendMicroservicesStack extends Stack {
       })
     );
 
+    //const stateHandlerDLQ = new SqsDlq(new Queue(this, 'stateHandleDLQ'));
+    //const stateHandlerDLQ = new AWS.SQS({endpoint: 'http://${process.env.LOCALSTACK_HOSTNAME}:4566'})
     const stateHandlerDLQ = new SqsDlq(new Queue(this, 'stateHandleDLQ'));
 
     const streamEventSourceProps: StreamEventSourceProps = {
@@ -199,5 +204,11 @@ export class FriendMicroservicesStack extends Stack {
       .addResource('{playerId}')
       .addResource('{friendId}')
       .addMethod('GET');
+
+    console.log('readAPI.url', readAPI.url);
+    this.apiEndpointUrl = new cdk.CfnOutput(this, 'ApiEndpointOutput', {
+      value: readAPI.url, //apiEndpoint,
+      exportName: `readapi-endpoint`,
+    });
   }
 }

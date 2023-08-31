@@ -19,6 +19,9 @@ export const handler: APIGatewayProxyHandler = async ({
   path,
   pathParameters,
 }: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  console.log({ httpMethod });
+  console.log({ path });
+  console.log({ pathParameters });
   if (httpMethod != 'GET') {
     throw new Error(`friends only accept GET method, you tried: ${httpMethod}`);
   }

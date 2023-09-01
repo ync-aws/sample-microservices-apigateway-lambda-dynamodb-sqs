@@ -113,9 +113,8 @@ export class FriendMicroservicesStack extends Stack {
       })
     );
 
-    //const stateHandlerDLQ = new SqsDlq(new Queue(this, 'stateHandleDLQ'));
-    //const stateHandlerDLQ = new AWS.SQS({endpoint: 'http://${process.env.LOCALSTACK_HOSTNAME}:4566'})
     const stateHandlerDLQ = new SqsDlq(new Queue(this, 'stateHandleDLQ'));
+    //const stateHandlerDLQ = new AWS.SQS({endpoint: 'http://${process.env.LOCALSTACK_HOSTNAME}:4566'})
 
     const streamEventSourceProps: StreamEventSourceProps = {
       startingPosition: StartingPosition.LATEST,
